@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Upload — StudyMind{% endblock %}
+{% block page_title %}Upload Files{% endblock %}
+
+{% block content %}
+<div class="page-content">
+  <div style="max-width:680px;margin:0 auto">
+    <div class="card mb-3">
+      <div style="font-family:var(--font-display);font-size:20px;font-weight:600;margin-bottom:6px">Upload Study Material</div>
+      <div class="text-muted text-sm mb-3">Upload PDFs or images — we'll extract the text using OCR so you can quiz, summarize, and create flashcards from it.</div>
+
+      <div class="form-group">
+        <label class="form-label">Note Title</label>
+        <input type="text" id="uploadTitle" class="form-control" placeholder="e.g. Biology Chapter 4">
+      </div>
+
+      <div id="dropZone" style="border:2px dashed var(--border);border-radius:var(--radius);padding:48px;text-align:center;cursor:pointer;transition:all 0.2s"
+           onclick="document.getElementById('fileInput').click()"
+           ondragover="this.style.borderColor='var(--accent)'"
+           ondragleave="this.style.borderColor='var(--border)'">
+        <div style="font-size:48px;margin-bottom:12px">📄</div>
+        <div style="font-weight:600;margin-bottom:6px">Drop your file here</div>
+        <div class="text-muted text-sm">or click to browse — PDF, PNG, JPG supported</div>
+        <input type="file" id="fileInput" accept=".pdf,.png,.jpg,.jpeg" style="display:none"
+               onchange="handleFileUpload(this.files[0])">
+      </div>
+
+      <div id="uploadProgress" style="display:none;margin-top:16px">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+          <div class="loading-spinner"></div>
+          <span class="text-sm">Extracting text from file...</span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" style="width:70%"></div></div>
+      </div>
+    </div>
+
+    <div class="card" id="extractedText" style="display:none">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <div style="font-weight:600">✅ Text Extracted Successfully</div>
+        <a href="{{ url_for('notes') }}" class="btn btn-primary btn-sm">View in Notes →</a>
+      </div>
+      <div style="font-size:13px;color:var(--subtle);font-family:var(--font-mono);background:var(--surface2);padding:16px;border-radius:var(--radius-sm);max-height:200px;overflow-y:auto;line-height:1.6" id="extractedPreview"></div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <div style="font-weight:600;margin-bottom:16px">📚 Supported Formats</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+        {% for fmt, desc, icon in [('PDF', 'Text & scanned docs', '📑'), ('PNG / JPG', 'Images with text', '🖼️'), ('Handwritten', 'Via OCR extraction', '✍️')] %}
+        <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:16px;text-align:center">
+          <div style="font-size:28px;margin-bottom:8px">{{ icon }}</div>
+          <div style="font-weight:500;font-size:13px">{{ fmt }}</div>
+          <div class="text-muted text-xs">{{ desc }}</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

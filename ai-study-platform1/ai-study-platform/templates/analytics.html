@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% block title %}Analytics — StudyMind{% endblock %}
+{% block page_title %}Analytics{% endblock %}
+
+{% block head %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="page-content">
+  <!-- Stat Overview -->
+  <div class="stat-grid mb-3">
+    <div class="stat-card">
+      <div class="stat-icon">📝</div>
+      <div class="stat-value">{{ notes_count }}</div>
+      <div class="stat-label">Notes</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">🃏</div>
+      <div class="stat-value">{{ flashcard_count }}</div>
+      <div class="stat-label">Flashcards</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">🧠</div>
+      <div class="stat-value">{{ quiz_results|length }}</div>
+      <div class="stat-label">Quizzes</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">📋</div>
+      <div class="stat-value">{{ exam_results|length }}</div>
+      <div class="stat-label">Exams</div>
+    </div>
+    {% if quiz_results %}
+    {% set avg = (quiz_results|map(attribute='score')|sum / quiz_results|map(attribute='total')|sum * 100)|round|int %}
+    <div class="stat-card">
+      <div class="stat-icon">🎯</div>
+      <div class="stat-value">{{ avg }}%</div>
+      <div class="stat-label">Avg Quiz Score</div>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="grid-2 mb-3">
+    <!-- Score Progress Chart -->
+    <div class="chart-card">
+      <div class="chart-title">Quiz Score Progress</div>
+      {% if quiz_results %}
+        <canvas id="scoreChart" height="200"></canvas>
+      {% else %}
+        <div class="text-muted text-sm" style="padding:40px 0;text-align:center">No quiz data yet</div>
+      {% endif %}
+    </div>
+
+    <!-- Topic Performance -->
+    <div class="chart-card">
+      <div class="chart-title">Performance by Topic</div>
+      {% if quiz_results %}
+        <canvas id="topicChart" height="200"></canvas>
+      {% else %}
+        <div class="text-muted text-sm" style="padding:40px 0;text-align:center">No topic data yet</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Quiz Results Table -->
+  {% if quiz_results %}
+  <div class="card">
+    <div style="font-family:var(--font-display);font-size:18px;font-weight:600;margin-bottom:20px">Quiz History</div>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Topic</th>
+          <th>Score</th>
+          <th>Percentage</th>
+          <th>Date</th>
+          <th>Grade</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in quiz_results|reverse %}
+        {% set pct = (r.score / r.total * 100)|round|int %}
+        <tr>
+          <td style="font-weight:500">{{ r.topic }}</td>
+          <td>{{ r.score }}/{{ r.total }}</td>
+          <td>
+            <div style="display:flex;align-items:center;gap:10px">
+              <div class="progress-bar" style="width:80px"><div class="progress-fill" style="width:{{ pct }}%"></div></div>
+              <span class="text-sm">{{ pct }}%</span>
+            </div>
+          </td>
+          <td class="text-muted text-sm">{{ r.created_at.strftime('%b %d, %Y') }}</td>
+          <td>
+            <span class="badge {% if pct >= 70 %}badge-green{% elif pct >= 50 %}badge-yellow{% else %}badge-red{% endif %}">
+              {% if pct >= 80 %}A{% elif pct >= 70 %}B{% elif pct >= 60 %}C{% elif pct >= 50 %}D{% else %}F{% endif %}
+            </span>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+window.quizData = {{ quiz_results | map(attribute='score') | list | tojson }}.map((score, i) => ({
+  score,
+  total: {{ quiz_results | map(attribute='total') | list | tojson }}[i]
+}));
+
+window.topicData = {{ quiz_results | map(attribute='topic') | list | tojson }}.map((topic, i) => ({
+  topic,
+  score: {{ quiz_results | map(attribute='score') | list | tojson }}[i],
+  total: {{ quiz_results | map(attribute='total') | list | tojson }}[i]
+}));
+
+// Deduplicate topics (average scores)
+const topicMap = {};
+window.topicData.forEach(d => {
+  if (!topicMap[d.topic]) topicMap[d.topic] = { score: 0, total: 0, count: 0 };
+  topicMap[d.topic].score += d.score;
+  topicMap[d.topic].total += d.total;
+  topicMap[d.topic].count++;
+});
+window.topicData = Object.entries(topicMap).map(([topic, d]) => ({
+  topic, score: d.score, total: d.total
+}));
+</script>
+{% endblock %}

@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}Exams — StudyMind{% endblock %}
+{% block page_title %}Mock Exams{% endblock %}
+
+{% block top_actions %}
+<button class="btn btn-primary btn-sm" onclick="openModal('examSetupModal')">+ Start Exam</button>
+{% endblock %}
+
+{% block content %}
+<div class="page-content">
+
+  <div id="examSetup">
+    <div class="grid-2" style="margin-bottom:28px">
+      <div class="card" style="background:linear-gradient(135deg,rgba(108,142,255,0.08),rgba(167,139,250,0.05));border-color:rgba(108,142,255,0.2)">
+        <div style="font-size:40px;margin-bottom:12px">📋</div>
+        <div style="font-family:var(--font-display);font-size:18px;font-weight:600;margin-bottom:6px">Timed Mock Exam</div>
+        <div class="text-muted text-sm mb-3">Simulate real exam conditions with a countdown timer and mixed question types.</div>
+        <button class="btn btn-primary btn-sm" onclick="openModal('examSetupModal')">Start New Exam</button>
+      </div>
+      <div class="card">
+        <div style="font-family:var(--font-display);font-size:18px;font-weight:600;margin-bottom:16px">Your Exam History</div>
+        {% if results %}
+          {% for r in results[:5] %}
+          {% set pct = (r.score / r.total * 100)|round|int %}
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
+            <div>
+              <div style="font-size:14px;font-weight:500">{{ r.topic }}</div>
+              <div class="text-muted text-xs">{{ r.created_at.strftime('%b %d, %Y') }}</div>
+            </div>
+            <div class="badge {% if pct >= 70 %}badge-green{% elif pct >= 50 %}badge-yellow{% else %}badge-red{% endif %}">
+              {{ pct }}%
+            </div>
+          </div>
+          {% endfor %}
+        {% else %}
+          <div class="text-muted text-sm" style="padding:24px 0;text-align:center">No exams taken yet</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Live Exam -->
+  <div id="examContainer" style="display:none">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 24px;position:sticky;top:60px;z-index:40">
+      <div style="font-family:var(--font-display);font-size:18px;font-weight:600">Mock Exam in Progress</div>
+      <div style="display:flex;align-items:center;gap:20px">
+        <div style="font-family:var(--font-mono);font-size:22px;font-weight:600;color:var(--accent)" id="examTimer">30:00</div>
+        <button class="btn btn-primary btn-sm" onclick="submitExam()">Submit Exam</button>
+      </div>
+    </div>
+    <div id="examQuestions"></div>
+    <div style="text-align:center;padding:24px">
+      <button class="btn btn-primary btn-lg" onclick="submitExam()">Submit Exam →</button>
+    </div>
+  </div>
+</div>
+
+<!-- Exam Setup Modal -->
+<div class="modal-overlay" id="examSetupModal">
+  <div class="modal">
+    <div class="modal-title">📋 Configure Your Exam</div>
+    <div class="form-group">
+      <label class="form-label">Exam Topic</label>
+      <input type="text" id="examTopic" class="form-control" placeholder="e.g. Cell Biology Final">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Duration</label>
+      <select id="examDuration" class="form-control">
+        <option value="15">15 minutes (~5 questions)</option>
+        <option value="30" selected>30 minutes (~10 questions)</option>
+        <option value="60">60 minutes (~20 questions)</option>
+        <option value="90">90 minutes (~30 questions)</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Study Material</label>
+      <textarea id="examText" class="form-control" rows="5" placeholder="Paste the content to be tested on..."></textarea>
+    </div>
+    <div style="display:flex;gap:12px">
+      <button class="btn btn-primary" id="generateExamBtn" onclick="generateExam()">Start Exam</button>
+      <button class="btn btn-secondary" onclick="closeModal('examSetupModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+{% endblock %}

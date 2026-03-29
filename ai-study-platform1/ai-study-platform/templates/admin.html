@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Admin — StudyMind{% endblock %}
+{% block page_title %}Admin Panel{% endblock %}
+
+{% block content %}
+<div class="page-content">
+  <div class="stat-grid mb-3">
+    <div class="stat-card">
+      <div class="stat-icon">👥</div>
+      <div class="stat-value">{{ users|length }}</div>
+      <div class="stat-label">Total Users</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">📝</div>
+      <div class="stat-value">{{ total_notes }}</div>
+      <div class="stat-label">Total Notes</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">🧠</div>
+      <div class="stat-value">{{ total_quizzes }}</div>
+      <div class="stat-label">Total Quizzes</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div style="font-family:var(--font-display);font-size:18px;font-weight:600;margin-bottom:20px">All Users</div>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Username</th>
+          <th>Email</th>
+          <th>Role</th>
+          <th>Joined</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for user in users %}
+        <tr>
+          <td style="font-weight:500">
+            <div style="display:flex;align-items:center;gap:10px">
+              <div style="width:28px;height:28px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:white;flex-shrink:0">
+                {{ user.username[0].upper() }}
+              </div>
+              {{ user.username }}
+            </div>
+          </td>
+          <td class="text-muted">{{ user.email }}</td>
+          <td>
+            <span class="badge {% if user.role == 'admin' %}badge-blue{% else %}badge-green{% endif %}">
+              {{ user.role }}
+            </span>
+          </td>
+          <td class="text-muted text-sm">{{ user.created_at.strftime('%b %d, %Y') }}</td>
+          <td>{{ user.notes|length }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — StudyMind AI{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="page-content">
+  <div style="margin-bottom:28px">
+    <div style="font-family:var(--font-display);font-size:26px;font-weight:600;margin-bottom:4px">
+      Welcome back, {{ current_user.username }} 👋
+    </div>
+    <div class="text-muted">Here's your study overview</div>
+  </div>
+
+  <div class="stat-grid">
+    <div class="stat-card">
+      <div class="stat-icon">📝</div>
+      <div class="stat-value">{{ notes_count }}</div>
+      <div class="stat-label">Notes Created</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">🃏</div>
+      <div class="stat-value">{{ flashcard_count }}</div>
+      <div class="stat-label">Flashcards</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">🧠</div>
+      <div class="stat-value">{{ quiz_results|length }}</div>
+      <div class="stat-label">Quizzes Taken</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">🎯</div>
+      <div class="stat-value">{{ avg_score }}%</div>
+      <div class="stat-label">Average Score</div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <!-- Quick Actions -->
+    <div class="card">
+      <div style="font-family:var(--font-display);font-size:18px;font-weight:600;margin-bottom:20px">Quick Actions</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <a href="{{ url_for('chat') }}" class="btn btn-secondary" style="justify-content:center;padding:16px">
+          💬 Chat with AI
+        </a>
+        <a href="{{ url_for('notes') }}" class="btn btn-secondary" style="justify-content:center;padding:16px">
+          📝 My Notes
+        </a>
+        <a href="{{ url_for('flashcards') }}" class="btn btn-secondary" style="justify-content:center;padding:16px">
+          🃏 Flashcards
+        </a>
+        <a href="{{ url_for('upload') }}" class="btn btn-secondary" style="justify-content:center;padding:16px">
+          📤 Upload PDF
+        </a>
+        <a href="{{ url_for('exam') }}" class="btn btn-secondary" style="justify-content:center;padding:16px">
+          📋 Take Exam
+        </a>
+        <a href="{{ url_for('planner') }}" class="btn btn-secondary" style="justify-content:center;padding:16px">
+          📅 Study Plan
+        </a>
+      </div>
+    </div>
+
+    <!-- Recent Results -->
+    <div class="card">
+      <div style="font-family:var(--font-display);font-size:18px;font-weight:600;margin-bottom:20px">Recent Quiz Results</div>
+      {% if quiz_results %}
+        {% for result in quiz_results %}
+        {% set pct = (result.score / result.total * 100)|round|int %}
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
+          <div>
+            <div style="font-size:14px;font-weight:500">{{ result.topic }}</div>
+            <div class="text-muted text-xs">{{ result.created_at.strftime('%b %d') }}</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-weight:600;color:{% if pct >= 70 %}var(--accent3){% elif pct >= 50 %}var(--warn){% else %}var(--danger){% endif %}">{{ pct }}%</div>
+            <div class="text-muted text-xs">{{ result.score }}/{{ result.total }}</div>
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="text-muted" style="text-align:center;padding:32px 0">
+          <div style="font-size:32px;margin-bottom:8px">🧠</div>
+          No quizzes yet. Start studying!
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Tips -->
+  <div class="card" style="margin-top:20px;background:linear-gradient(135deg,rgba(108,142,255,0.08),rgba(167,139,250,0.05));border-color:rgba(108,142,255,0.2)">
+    <div style="display:flex;align-items:center;gap:16px">
+      <div style="font-size:40px">💡</div>
+      <div>
+        <div style="font-weight:600;margin-bottom:4px">Study Tip of the Day</div>
+        <div class="text-subtle">Use the Spaced Repetition technique with flashcards — review cards you're uncertain about more frequently, and cards you know well less often. This maximizes long-term retention!</div>
+      </div>
+      <a href="{{ url_for('coach') }}" class="btn btn-primary btn-sm" style="margin-left:auto;flex-shrink:0">Get Coaching →</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

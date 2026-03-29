@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}Study Planner — StudyMind{% endblock %}
+{% block page_title %}Study Planner{% endblock %}
+
+{% block top_actions %}
+<button class="btn btn-primary btn-sm" onclick="openModal('plannerModal')">+ New Plan</button>
+{% endblock %}
+
+{% block content %}
+<div class="page-content">
+  <div class="grid-2" style="margin-bottom:28px">
+    <div class="card" style="background:linear-gradient(135deg,rgba(52,211,153,0.08),rgba(108,142,255,0.05));border-color:rgba(52,211,153,0.2)">
+      <div style="font-size:40px;margin-bottom:12px">📅</div>
+      <div style="font-family:var(--font-display);font-size:18px;font-weight:600;margin-bottom:6px">AI Study Planner</div>
+      <div class="text-muted text-sm mb-3">Tell us your goal and deadline — we'll create a personalised daily study schedule for you.</div>
+      <button class="btn btn-primary btn-sm" onclick="openModal('plannerModal')">Generate Plan</button>
+    </div>
+
+    <div class="card">
+      <div style="font-size:16px;font-weight:600;font-family:var(--font-display);margin-bottom:16px">Planning Tips</div>
+      {% for tip in ["Study in focused 25-min blocks (Pomodoro technique)", "Review material within 24 hours of first learning", "Test yourself regularly rather than re-reading", "Prioritise difficult topics when you're most alert"] %}
+      <div style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px;color:var(--subtle)">
+        <span style="color:var(--accent3);flex-shrink:0">✓</span> {{ tip }}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  {% if plans %}
+    <div style="font-family:var(--font-display);font-size:18px;font-weight:600;margin-bottom:16px">Your Study Plans</div>
+    {% for plan in plans %}
+    <div class="plan-card">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px">
+        <div>
+          <div style="font-weight:600;margin-bottom:4px">{{ plan.title }}</div>
+          <div class="text-muted text-xs">Created {{ plan.created_at.strftime('%b %d, %Y') }}
+            {% if plan.deadline %} · Deadline: {{ plan.deadline }}{% endif %}
+          </div>
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="togglePlan({{ plan.id }})">View</button>
+      </div>
+      <div class="plan-content" id="plan-{{ plan.id }}" style="display:none">{{ plan.content }}</div>
+    </div>
+    {% endfor %}
+  {% else %}
+    <div style="text-align:center;padding:60px;color:var(--muted)">
+      <div style="font-size:48px;margin-bottom:16px">📅</div>
+      <div style="font-family:var(--font-display);font-size:20px;margin-bottom:8px">No study plans yet</div>
+      <div class="text-sm mb-3">Generate your first AI-powered study plan</div>
+      <button class="btn btn-primary" onclick="openModal('plannerModal')">Create Study Plan</button>
+    </div>
+  {% endif %}
+</div>
+
+<!-- Planner Modal -->
+<div class="modal-overlay" id="plannerModal">
+  <div class="modal">
+    <div class="modal-title">📅 Create Study Plan</div>
+    <div class="form-group">
+      <label class="form-label">Your Goal</label>
+      <input type="text" id="planGoal" class="form-control" placeholder="e.g. Pass my Chemistry A-Level exam">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Deadline / Exam Date</label>
+      <input type="text" id="planDeadline" class="form-control" placeholder="e.g. June 15, 2025">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Subjects / Topics</label>
+      <textarea id="planSubjects" class="form-control" rows="3" placeholder="e.g. Organic Chemistry, Thermodynamics, Electrochemistry..."></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Available Study Time</label>
+      <select id="planHours" class="form-control">
+        <option value="1">1 hour per day</option>
+        <option value="2" selected>2 hours per day</option>
+        <option value="3">3 hours per day</option>
+        <option value="4">4+ hours per day</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:12px">
+      <button class="btn btn-primary" id="generatePlanBtn" onclick="generatePlan()">Generate Plan</button>
+      <button class="btn btn-secondary" onclick="closeModal('plannerModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function togglePlan(id) {
+  const el = document.getElementById(`plan-${id}`);
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+</script>
+{% endblock %}
