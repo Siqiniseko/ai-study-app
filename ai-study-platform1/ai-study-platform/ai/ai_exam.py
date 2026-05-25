@@ -2,11 +2,15 @@ import anthropic
 import os
 import json
 import re
+from ai.local_generators import local_exam
 
 client = anthropic.Anthropic(api_key=os.environ.get('ANTHROPIC_API_KEY', ''))
 
 def create_exam(text: str, duration_minutes: int = 30) -> list:
     num_questions = max(5, duration_minutes // 3)
+    if not os.environ.get('ANTHROPIC_API_KEY', '').strip():
+        return local_exam(text, duration_minutes)
+
     prompt = f"""Create a {duration_minutes}-minute exam with {num_questions} questions based on this material.
 Mix question types. Return ONLY a JSON array:
 [
@@ -42,5 +46,5 @@ Material:
         raw = re.sub(r'^```json\s*', '', raw)
         raw = re.sub(r'\s*```$', '', raw)
         return json.loads(raw)
-    except Exception as e:
-        return []
+    except Exception:
+        return local_exam(text, duration_minutes)

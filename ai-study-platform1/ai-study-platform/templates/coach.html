@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}AI Coach — StudyMind{% endblock %}
+{% block title %}AI Coach - StudyMind{% endblock %}
 {% block page_title %}AI Study Coach{% endblock %}
 
 {% block content %}
@@ -30,7 +30,7 @@
 
     <!-- Get Advice -->
     <div class="card" style="background:linear-gradient(135deg,rgba(167,139,250,0.08),rgba(108,142,255,0.05));border-color:rgba(167,139,250,0.2)">
-      <div style="font-size:40px;margin-bottom:12px">🎯</div>
+      <div class="format-icon" style="margin-bottom:12px">C</div>
       <div style="font-family:var(--font-display);font-size:18px;font-weight:600;margin-bottom:8px">Personalised Coaching</div>
       <div class="text-muted text-sm mb-3">Our AI coach analyses your quiz performance and gives you tailored advice to study smarter.</div>
       <button class="btn btn-primary" id="adviceBtn" onclick="getCoachAdvice()">Get My Personalised Advice</button>
@@ -40,7 +40,7 @@
   <!-- Advice Output -->
   <div class="card" id="adviceCard" style="display:none">
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
-      <div style="font-size:32px">🎯</div>
+      <div class="format-icon">C</div>
       <div>
         <div style="font-weight:600;font-size:16px">Your Coaching Report</div>
         <div class="text-muted text-xs">Based on your recent performance</div>
@@ -54,12 +54,12 @@
     <div style="font-family:var(--font-display);font-size:18px;font-weight:600;margin-bottom:16px">Proven Study Techniques</div>
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px">
       {% for technique, desc, icon in [
-        ('Pomodoro Technique', '25-min focused sessions with 5-min breaks. Maximises concentration.', '🍅'),
-        ('Active Recall', 'Test yourself instead of re-reading. Forces your brain to retrieve info.', '🧠'),
-        ('Spaced Repetition', 'Review material at increasing intervals for long-term retention.', '🔁'),
-        ('Mind Mapping', 'Visually connect concepts to understand relationships and structure.', '🗺️'),
-        ('Feynman Technique', 'Explain topics simply as if teaching a child. Exposes gaps.', '💡'),
-        ('Interleaving', 'Mix different subjects while studying to improve problem-solving.', '🔀')
+        ('Pomodoro Technique', '25-min focused sessions with 5-min breaks. Maximises concentration.', '25'),
+        ('Active Recall', 'Test yourself instead of re-reading. Forces your brain to retrieve info.', 'AR'),
+        ('Spaced Repetition', 'Review material at increasing intervals for long-term retention.', 'SR'),
+        ('Mind Mapping', 'Visually connect concepts to understand relationships and structure.', 'MM'),
+        ('Feynman Technique', 'Explain topics simply as if teaching a child. Exposes gaps.', 'FT'),
+        ('Interleaving', 'Mix different subjects while studying to improve problem-solving.', 'IN')
       ] %}
       <div class="card card-sm">
         <div style="font-size:28px;margin-bottom:10px">{{ icon }}</div>

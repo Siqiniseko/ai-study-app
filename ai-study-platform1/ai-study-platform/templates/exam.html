@@ -1,9 +1,9 @@
 {% extends "base.html" %}
-{% block title %}Exams — StudyMind{% endblock %}
+{% block title %}Exams - StudyMind{% endblock %}
 {% block page_title %}Mock Exams{% endblock %}
 
 {% block top_actions %}
-<button class="btn btn-primary btn-sm" onclick="openModal('examSetupModal')">+ Start Exam</button>
+<button class="btn btn-primary btn-sm" onclick="openModal('examSetupModal')">Start exam</button>
 {% endblock %}
 
 {% block content %}
@@ -12,7 +12,7 @@
   <div id="examSetup">
     <div class="grid-2" style="margin-bottom:28px">
       <div class="card" style="background:linear-gradient(135deg,rgba(108,142,255,0.08),rgba(167,139,250,0.05));border-color:rgba(108,142,255,0.2)">
-        <div style="font-size:40px;margin-bottom:12px">📋</div>
+        <div class="format-icon" style="margin-bottom:12px">E</div>
         <div style="font-family:var(--font-display);font-size:18px;font-weight:600;margin-bottom:6px">Timed Mock Exam</div>
         <div class="text-muted text-sm mb-3">Simulate real exam conditions with a countdown timer and mixed question types.</div>
         <button class="btn btn-primary btn-sm" onclick="openModal('examSetupModal')">Start New Exam</button>
@@ -50,7 +50,7 @@
     </div>
     <div id="examQuestions"></div>
     <div style="text-align:center;padding:24px">
-      <button class="btn btn-primary btn-lg" onclick="submitExam()">Submit Exam →</button>
+      <button class="btn btn-primary btn-lg" onclick="submitExam()">Submit exam</button>
     </div>
   </div>
 </div>
@@ -58,7 +58,7 @@
 <!-- Exam Setup Modal -->
 <div class="modal-overlay" id="examSetupModal">
   <div class="modal">
-    <div class="modal-title">📋 Configure Your Exam</div>
+    <div class="modal-title">Configure your exam</div>
     <div class="form-group">
       <label class="form-label">Exam Topic</label>
       <input type="text" id="examTopic" class="form-control" placeholder="e.g. Cell Biology Final">

@@ -1,9 +1,9 @@
 {% extends "base.html" %}
-{% block title %}Notes — StudyMind{% endblock %}
+{% block title %}Notes - StudyMind{% endblock %}
 {% block page_title %}Notes{% endblock %}
 
 {% block top_actions %}
-<button class="btn btn-primary btn-sm" onclick="createNote()">+ New Note</button>
+<button class="btn btn-primary btn-sm" onclick="createNote()">New note</button>
 {% endblock %}
 
 {% block content %}
@@ -12,7 +12,7 @@
     <!-- Notes Sidebar -->
     <div class="notes-sidebar">
       <div style="padding:12px;border-bottom:1px solid var(--border)">
-        <input type="text" class="form-control" placeholder="🔍 Search notes..." id="noteSearch" oninput="filterNotes(this.value)">
+        <input type="text" class="form-control" placeholder="Search notes..." id="noteSearch" oninput="filterNotes(this.value)">
       </div>
       <div class="notes-list" id="notesList">
         {% if notes %}
@@ -25,7 +25,7 @@
           {% endfor %}
         {% else %}
           <div style="text-align:center;padding:40px 16px;color:var(--muted)">
-            <div style="font-size:32px;margin-bottom:8px">📝</div>
+            <div class="empty-icon" style="margin:0 auto 10px">N</div>
             No notes yet
           </div>
         {% endif %}
@@ -37,10 +37,10 @@
       <div class="note-editor" id="noteEditor" style="display:none;flex:1">
         <input type="hidden" id="currentNoteId">
         <div class="note-editor-toolbar">
-          <button class="btn btn-secondary btn-sm" id="summarizeBtn" onclick="summarizeNote()">✨ Summarize</button>
-          <button class="btn btn-secondary btn-sm" onclick="openQuizModal()">🧠 Quiz Me</button>
-          <button class="btn btn-secondary btn-sm" onclick="generateFlashcardsFromNote()">🃏 Make Flashcards</button>
-          <button class="btn btn-danger btn-sm" style="margin-left:auto" onclick="deleteNote(document.getElementById('currentNoteId').value)">🗑</button>
+          <button class="btn btn-secondary btn-sm" id="summarizeBtn" onclick="summarizeNote()">Summarize</button>
+          <button class="btn btn-secondary btn-sm" onclick="openQuizModal()">Quiz me</button>
+          <button class="btn btn-secondary btn-sm" onclick="generateFlashcardsFromNote()">Make flashcards</button>
+          <button class="btn btn-danger btn-sm" style="margin-left:auto" onclick="deleteNote(document.getElementById('currentNoteId').value)">Delete</button>
         </div>
         <input type="text" id="noteTitle" placeholder="Note title..." oninput="autoSaveNote()">
         <textarea id="noteContent" placeholder="Start writing your notes here..." oninput="autoSaveNote()"></textarea>
@@ -49,18 +49,18 @@
       <!-- Summary Panel -->
       <div class="card" id="summaryPanel" style="display:none;max-height:300px;overflow-y:auto">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-          <div style="font-weight:600;font-size:14px">✨ AI Summary</div>
-          <button onclick="document.getElementById('summaryPanel').style.display='none'" style="background:none;border:none;color:var(--muted);cursor:pointer">✕</button>
+          <div style="font-weight:600;font-size:14px">AI summary</div>
+          <button onclick="document.getElementById('summaryPanel').style.display='none'" style="background:none;border:none;color:var(--muted);cursor:pointer">Close</button>
         </div>
         <div id="summaryContent" class="text-sm" style="line-height:1.7;color:var(--subtle)"></div>
       </div>
 
       <!-- Empty state -->
       <div id="emptyState" class="card" style="text-align:center;padding:60px;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center">
-        <div style="font-size:48px;margin-bottom:16px">📖</div>
+        <div class="empty-icon" style="margin-bottom:16px">N</div>
         <div style="font-family:var(--font-display);font-size:20px;margin-bottom:8px">Select a note to edit</div>
         <div class="text-muted">Or create a new one to get started</div>
-        <button class="btn btn-primary" style="margin-top:20px" onclick="createNote()">+ Create Note</button>
+        <button class="btn btn-primary" style="margin-top:20px" onclick="createNote()">Create note</button>
       </div>
     </div>
   </div>
@@ -69,7 +69,7 @@
 <!-- Quiz Modal -->
 <div class="modal-overlay" id="quizModal">
   <div class="modal">
-    <div class="modal-title">🧠 Generate Quiz</div>
+    <div class="modal-title">Generate quiz</div>
     <div class="form-group">
       <label class="form-label">Topic Name</label>
       <input type="text" id="quizTopic" class="form-control" placeholder="e.g. Chapter 5 - Photosynthesis">
@@ -94,7 +94,7 @@
 <!-- Flashcard Modal -->
 <div class="modal-overlay" id="fcModal">
   <div class="modal">
-    <div class="modal-title">🃏 Generate Flashcards</div>
+    <div class="modal-title">Generate flashcards</div>
     <div class="form-group">
       <label class="form-label">Deck Name</label>
       <input type="text" id="noteDeckName" class="form-control" placeholder="e.g. Biology Chapter 3">

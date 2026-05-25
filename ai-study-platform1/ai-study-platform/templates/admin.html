@@ -1,22 +1,22 @@
 {% extends "base.html" %}
-{% block title %}Admin — StudyMind{% endblock %}
+{% block title %}Admin - StudyMind{% endblock %}
 {% block page_title %}Admin Panel{% endblock %}
 
 {% block content %}
 <div class="page-content">
   <div class="stat-grid mb-3">
     <div class="stat-card">
-      <div class="stat-icon">👥</div>
+      <div class="stat-icon">U</div>
       <div class="stat-value">{{ users|length }}</div>
       <div class="stat-label">Total Users</div>
     </div>
     <div class="stat-card">
-      <div class="stat-icon">📝</div>
+      <div class="stat-icon">N</div>
       <div class="stat-value">{{ total_notes }}</div>
       <div class="stat-label">Total Notes</div>
     </div>
     <div class="stat-card">
-      <div class="stat-icon">🧠</div>
+      <div class="stat-icon">Q</div>
       <div class="stat-value">{{ total_quizzes }}</div>
       <div class="stat-label">Total Quizzes</div>
     </div>

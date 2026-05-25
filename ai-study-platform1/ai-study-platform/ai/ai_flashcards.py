@@ -2,10 +2,14 @@ import anthropic
 import os
 import json
 import re
+from ai.local_generators import local_flashcards
 
 client = anthropic.Anthropic(api_key=os.environ.get('ANTHROPIC_API_KEY', ''))
 
 def create_flashcards(text: str, count: int = 10) -> list:
+    if not os.environ.get('ANTHROPIC_API_KEY', '').strip():
+        return local_flashcards(text, count)
+
     prompt = f"""Create {count} study flashcards from this content.
 Return ONLY a JSON array with no markdown:
 [
@@ -27,5 +31,5 @@ Content:
         raw = re.sub(r'^```json\s*', '', raw)
         raw = re.sub(r'\s*```$', '', raw)
         return json.loads(raw)
-    except Exception as e:
-        return [{"front": "Error generating flashcards", "back": str(e)}]
+    except Exception:
+        return local_flashcards(text, count)

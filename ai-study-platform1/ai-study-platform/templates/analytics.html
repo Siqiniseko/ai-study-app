@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Analytics — StudyMind{% endblock %}
+{% block title %}Analytics - StudyMind{% endblock %}
 {% block page_title %}Analytics{% endblock %}
 
 {% block head %}
@@ -11,29 +11,29 @@
   <!-- Stat Overview -->
   <div class="stat-grid mb-3">
     <div class="stat-card">
-      <div class="stat-icon">📝</div>
+      <div class="stat-icon">N</div>
       <div class="stat-value">{{ notes_count }}</div>
       <div class="stat-label">Notes</div>
     </div>
     <div class="stat-card">
-      <div class="stat-icon">🃏</div>
+      <div class="stat-icon">F</div>
       <div class="stat-value">{{ flashcard_count }}</div>
       <div class="stat-label">Flashcards</div>
     </div>
     <div class="stat-card">
-      <div class="stat-icon">🧠</div>
+      <div class="stat-icon">Q</div>
       <div class="stat-value">{{ quiz_results|length }}</div>
       <div class="stat-label">Quizzes</div>
     </div>
     <div class="stat-card">
-      <div class="stat-icon">📋</div>
+      <div class="stat-icon">E</div>
       <div class="stat-value">{{ exam_results|length }}</div>
       <div class="stat-label">Exams</div>
     </div>
     {% if quiz_results %}
     {% set avg = (quiz_results|map(attribute='score')|sum / quiz_results|map(attribute='total')|sum * 100)|round|int %}
     <div class="stat-card">
-      <div class="stat-icon">🎯</div>
+      <div class="stat-icon">%</div>
       <div class="stat-value">{{ avg }}%</div>
       <div class="stat-label">Avg Quiz Score</div>
     </div>

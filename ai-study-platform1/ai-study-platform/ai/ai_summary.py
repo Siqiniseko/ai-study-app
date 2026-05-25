@@ -1,11 +1,14 @@
 import anthropic
 import os
+from ai.local_generators import local_summary
 
 client = anthropic.Anthropic(api_key=os.environ.get('ANTHROPIC_API_KEY', ''))
 
 def generate_summary(text: str) -> str:
     if not text or len(text.strip()) < 50:
         return "Not enough content to summarize."
+    if not os.environ.get('ANTHROPIC_API_KEY', '').strip():
+        return local_summary(text)
     
     prompt = f"""Summarize the following study material clearly and concisely. 
 Structure your summary with:
@@ -24,4 +27,4 @@ Text to summarize:
         )
         return response.content[0].text
     except Exception as e:
-        return f"Summary generation failed: {str(e)}"
+        return local_summary(text)

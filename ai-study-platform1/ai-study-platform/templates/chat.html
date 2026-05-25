@@ -1,8 +1,16 @@
 {% extends "base.html" %}
-{% block title %}AI Tutor — StudyMind{% endblock %}
+{% block title %}AI Tutor - StudyMind{% endblock %}
 {% block page_title %}AI Tutor{% endblock %}
 
 {% block top_actions %}
+<button class="btn btn-secondary btn-sm" id="trainTutorBtn" onclick="trainTutorModel()">Train tutor</button>
+<button class="btn btn-secondary btn-sm icon-btn" id="voiceToggleBtn" onclick="toggleVoiceOutput()" aria-label="Turn spoken responses on" title="Turn spoken responses on">
+  <svg viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M11 5 6 9H3v6h3l5 4V5Z"></path>
+    <path d="M15.5 8.5a5 5 0 0 1 0 7"></path>
+    <path d="M18.5 5.5a9 9 0 0 1 0 13"></path>
+  </svg>
+</button>
 <button class="btn btn-secondary btn-sm" onclick="clearChat()">Clear Chat</button>
 {% endblock %}
 
@@ -11,9 +19,19 @@
   <div class="chat-messages" id="chatMessages">
     {% if not history %}
     <div style="text-align:center;padding:60px 24px;max-width:480px;margin:0 auto">
-      <div style="font-size:56px;margin-bottom:16px">🎓</div>
+      <div class="empty-icon" style="margin:0 auto 16px">T</div>
       <div style="font-family:var(--font-display);font-size:22px;font-weight:600;margin-bottom:8px">Your AI Study Tutor</div>
-      <div class="text-muted" style="margin-bottom:32px">Ask me anything — concepts, problems, explanations, or summaries of your notes.</div>
+      <div class="text-muted" style="margin-bottom:32px">Ask me anything: concepts, problems, explanations, or summaries of your notes.</div>
+      <div class="card card-sm" id="tutorStatusCard" style="text-align:left;margin-bottom:18px">
+        <div style="font-weight:800;color:var(--ink);margin-bottom:4px">Tutor training</div>
+        <div class="text-muted text-sm" id="tutorStatusText">
+          {% if model_status.user_trained %}
+            Trained on {{ model_status.source_counts.notes }} note{{ 's' if model_status.source_counts.notes != 1 }} and {{ model_status.source_counts.flashcards }} flashcard{{ 's' if model_status.source_counts.flashcards != 1 }}.
+          {% else %}
+            Built-in tutor model ready with {{ model_status.source_counts.base_lessons }} trained lessons. Add notes or flashcards, then press Train tutor to personalize it.
+          {% endif %}
+        </div>
+      </div>
       <div style="display:grid;gap:10px">
         {% for prompt in ["Explain quantum entanglement simply", "Help me understand the French Revolution", "What's the difference between DNA and RNA?", "Solve this math step by step"] %}
         <button class="option-btn" onclick="document.getElementById('chatInput').value='{{ prompt }}';sendMessage()">
@@ -26,7 +44,7 @@
       {% for msg in history %}
       <div class="message {% if msg.role == 'user' %}user-message{% endif %}">
         <div class="message-avatar {% if msg.role == 'assistant' %}ai-avatar{% else %}user-avatar-msg{% endif %}">
-          {{ '🎓' if msg.role == 'assistant' else '👤' }}
+          {{ 'AI' if msg.role == 'assistant' else current_user.username[0].upper() }}
         </div>
         <div class="message-bubble">{{ msg.content }}</div>
       </div>
@@ -35,14 +53,39 @@
   </div>
 
   <div class="chat-input-area">
+    {% if history %}
+    <div class="card card-sm" id="tutorStatusCard" style="margin-bottom:12px">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+        <div>
+          <div style="font-weight:800;color:var(--ink)">Tutor training</div>
+          <div class="text-muted text-sm" id="tutorStatusText">
+            {% if model_status.user_trained %}
+              Trained on {{ model_status.source_counts.notes }} note{{ 's' if model_status.source_counts.notes != 1 }} and {{ model_status.source_counts.flashcards }} flashcard{{ 's' if model_status.source_counts.flashcards != 1 }}.
+            {% else %}
+              Built-in tutor model ready with {{ model_status.source_counts.base_lessons }} trained lessons. Press Train tutor after adding study material.
+            {% endif %}
+          </div>
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="trainTutorModel()">Train now</button>
+      </div>
+    </div>
+    {% endif %}
     <div class="chat-input-wrapper">
       <textarea id="chatInput" placeholder="Ask your tutor anything..." rows="1"></textarea>
+      <button class="btn btn-secondary btn-sm icon-btn" id="micBtn" onclick="toggleVoiceInput()" aria-label="Record voice question" title="Record voice question">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3Z"></path>
+          <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+          <path d="M12 19v3"></path>
+          <path d="M8 22h8"></path>
+        </svg>
+      </button>
       <button class="btn btn-primary btn-sm" onclick="sendMessage()" style="flex-shrink:0">
-        Send ↑
+        Send
       </button>
     </div>
-    <div class="text-xs text-muted" style="margin-top:8px;text-align:center">
-      Press Enter to send · Shift+Enter for new line
+    <div class="text-xs text-muted" id="voiceStatus" style="margin-top:8px;text-align:center">
+      Press Enter to send. Shift+Enter for a new line. Use Voice to dictate a question.
     </div>
   </div>
 </div>
@@ -50,8 +93,10 @@
 
 {% block scripts %}
 <script>
-function clearChat() {
-  if (confirm('Clear chat history?')) location.reload();
+async function clearChat() {
+  if (!confirm('Clear chat history?')) return;
+  await apiPost('/chat/clear', {});
+  location.reload();
 }
 // Scroll to bottom on load
 document.getElementById('chatMessages').scrollTop = document.getElementById('chatMessages').scrollHeight;

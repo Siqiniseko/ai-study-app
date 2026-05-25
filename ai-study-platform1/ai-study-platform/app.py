@@ -163,8 +163,9 @@ def notes():
 @app.route('/notes/create', methods=['POST'])
 @login_required
 def create_note():
-    title = request.form.get('title')
-    content = request.form.get('content')
+    data = request.get_json(silent=True) or {}
+    title = data.get('title') or request.form.get('title') or 'Untitled Note'
+    content = data.get('content') if 'content' in data else request.form.get('content')
     note = Note(title=title, content=content, user_id=current_user.id)
     db.session.add(note)
     db.session.commit()
@@ -211,25 +212,74 @@ def upload():
 @app.route('/chat')
 @login_required
 def chat():
+    from ai.local_tutor import tutor_model_status
     history = ChatMessage.query.filter_by(user_id=current_user.id).order_by(ChatMessage.created_at.desc()).limit(50).all()
     history.reverse()
-    return render_template('chat.html', history=history)
+    model_status = tutor_model_status(app.instance_path, current_user.id)
+    return render_template('chat.html', history=history, model_status=model_status)
 
 @app.route('/chat/send', methods=['POST'])
 @login_required
 def chat_send():
     from ai.ai_chat import get_chat_response
+    from ai.local_tutor import load_tutor_model
     data = request.get_json()
     user_msg = data.get('message', '')
     history = ChatMessage.query.filter_by(user_id=current_user.id).order_by(ChatMessage.created_at.asc()).limit(20).all()
     msg_history = [{'role': m.role, 'content': m.content} for m in history]
-    response = get_chat_response(user_msg, msg_history)
+    tutor_model = load_tutor_model(app.instance_path, current_user.id)
+    response = get_chat_response(user_msg, msg_history, tutor_model)
     user_record = ChatMessage(role='user', content=user_msg, user_id=current_user.id)
     ai_record = ChatMessage(role='assistant', content=response, user_id=current_user.id)
     db.session.add(user_record)
     db.session.add(ai_record)
     db.session.commit()
     return jsonify({'response': response})
+
+@app.route('/chat/train', methods=['POST'])
+@login_required
+def train_chat_model():
+    from ai.local_tutor import train_tutor_model
+    notes = Note.query.filter_by(user_id=current_user.id).all()
+    flashcards = Flashcard.query.filter_by(user_id=current_user.id).all()
+    model = train_tutor_model(
+        app.instance_path,
+        current_user.id,
+        [
+            {
+                'title': note.title,
+                'content': note.content or '',
+                'summary': note.summary or ''
+            }
+            for note in notes
+        ],
+        [
+            {
+                'deck_name': card.deck_name,
+                'front': card.front,
+                'back': card.back
+            }
+            for card in flashcards
+        ]
+    )
+    return jsonify({
+        'success': True,
+        'trained_at': model.get('trained_at'),
+        'source_counts': model.get('source_counts')
+    })
+
+@app.route('/chat/model-status')
+@login_required
+def chat_model_status():
+    from ai.local_tutor import tutor_model_status
+    return jsonify(tutor_model_status(app.instance_path, current_user.id))
+
+@app.route('/chat/clear', methods=['POST'])
+@login_required
+def clear_chat():
+    ChatMessage.query.filter_by(user_id=current_user.id).delete()
+    db.session.commit()
+    return jsonify({'success': True})
 
 @app.route('/summary', methods=['POST'])
 @login_required

@@ -1,9 +1,13 @@
 import anthropic
 import os
+from ai.local_generators import local_coaching_advice, local_study_plan
 
 client = anthropic.Anthropic(api_key=os.environ.get('ANTHROPIC_API_KEY', ''))
 
 def generate_study_plan(goal: str, deadline: str, subjects: str, hours_per_day: int) -> str:
+    if not os.environ.get('ANTHROPIC_API_KEY', '').strip():
+        return local_study_plan(goal, deadline, subjects, hours_per_day)
+
     prompt = f"""Create a detailed, actionable study plan.
 
 Goal: {goal}
@@ -27,10 +31,13 @@ Format it clearly with sections and bullet points."""
             messages=[{"role": "user", "content": prompt}]
         )
         return response.content[0].text
-    except Exception as e:
-        return f"Could not generate study plan: {str(e)}"
+    except Exception:
+        return local_study_plan(goal, deadline, subjects, hours_per_day)
 
 def get_coaching_advice(performance_data: list) -> str:
+    if not os.environ.get('ANTHROPIC_API_KEY', '').strip():
+        return local_coaching_advice(performance_data)
+
     if not performance_data:
         prompt = "Give general study advice and tips for a student just starting their learning journey."
     else:
@@ -54,5 +61,5 @@ Provide:
             messages=[{"role": "user", "content": prompt}]
         )
         return response.content[0].text
-    except Exception as e:
-        return f"Could not generate advice: {str(e)}"
+    except Exception:
+        return local_coaching_advice(performance_data)

@@ -2,10 +2,14 @@ import anthropic
 import os
 import json
 import re
+from ai.local_generators import local_quiz
 
 client = anthropic.Anthropic(api_key=os.environ.get('ANTHROPIC_API_KEY', ''))
 
 def create_quiz(text: str, num_questions: int = 5) -> list:
+    if not os.environ.get('ANTHROPIC_API_KEY', '').strip():
+        return local_quiz(text, num_questions)
+
     prompt = f"""Create {num_questions} multiple choice quiz questions based on this study material.
 Return ONLY a JSON array with no markdown, no explanation. Format:
 [
@@ -31,7 +35,5 @@ Study material:
         raw = re.sub(r'^```json\s*', '', raw)
         raw = re.sub(r'\s*```$', '', raw)
         return json.loads(raw)
-    except Exception as e:
-        return [{"question": "Quiz generation failed. Please try again.", 
-                 "options": ["A) Error", "B) Error", "C) Error", "D) Error"],
-                 "correct": 0, "explanation": str(e)}]
+    except Exception:
+        return local_quiz(text, num_questions)

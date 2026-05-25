@@ -12,54 +12,56 @@
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-brand">
       <div class="brand-logo">StudyMind</div>
-      <div class="brand-tagline">AI-Powered Learning</div>
+      <div class="brand-tagline">AI workspace for focused learning</div>
     </div>
+
     <nav class="sidebar-nav">
       <div class="nav-section-label">Overview</div>
       <a href="{{ url_for('dashboard') }}" class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}">
-        <span class="icon">⚡</span> Dashboard
+        <span class="nav-icon">D</span> Dashboard
       </a>
       <a href="{{ url_for('analytics') }}" class="nav-link {% if request.endpoint == 'analytics' %}active{% endif %}">
-        <span class="icon">📊</span> Analytics
+        <span class="nav-icon">A</span> Analytics
       </a>
 
       <div class="nav-section-label">Study</div>
       <a href="{{ url_for('notes') }}" class="nav-link {% if request.endpoint == 'notes' %}active{% endif %}">
-        <span class="icon">📝</span> Notes
+        <span class="nav-icon">N</span> Notes
       </a>
       <a href="{{ url_for('upload') }}" class="nav-link {% if request.endpoint == 'upload' %}active{% endif %}">
-        <span class="icon">📤</span> Upload
+        <span class="nav-icon">U</span> Uploads
       </a>
       <a href="{{ url_for('chat') }}" class="nav-link {% if request.endpoint == 'chat' %}active{% endif %}">
-        <span class="icon">💬</span> AI Tutor
+        <span class="nav-icon">T</span> AI Tutor
       </a>
       <a href="{{ url_for('flashcards') }}" class="nav-link {% if request.endpoint == 'flashcards' %}active{% endif %}">
-        <span class="icon">🃏</span> Flashcards
+        <span class="nav-icon">F</span> Flashcards
       </a>
 
       <div class="nav-section-label">Assessment</div>
       <a href="{{ url_for('notes') }}#quiz" class="nav-link {% if request.endpoint == 'quiz' %}active{% endif %}">
-        <span class="icon">🧠</span> Quizzes
+        <span class="nav-icon">Q</span> Quizzes
       </a>
       <a href="{{ url_for('exam') }}" class="nav-link {% if request.endpoint == 'exam' %}active{% endif %}">
-        <span class="icon">📋</span> Exams
+        <span class="nav-icon">E</span> Exams
       </a>
 
       <div class="nav-section-label">Planning</div>
       <a href="{{ url_for('planner') }}" class="nav-link {% if request.endpoint == 'planner' %}active{% endif %}">
-        <span class="icon">📅</span> Planner
+        <span class="nav-icon">P</span> Planner
       </a>
       <a href="{{ url_for('coach') }}" class="nav-link {% if request.endpoint == 'coach' %}active{% endif %}">
-        <span class="icon">🎯</span> AI Coach
+        <span class="nav-icon">C</span> AI Coach
       </a>
 
       {% if current_user.role == 'admin' %}
       <div class="nav-section-label">Admin</div>
       <a href="{{ url_for('admin') }}" class="nav-link {% if request.endpoint == 'admin' %}active{% endif %}">
-        <span class="icon">⚙️</span> Admin Panel
+        <span class="nav-icon">M</span> Admin Panel
       </a>
       {% endif %}
     </nav>
+
     <div class="sidebar-footer">
       <div class="user-card">
         <div class="user-avatar">{{ current_user.username[0].upper() }}</div>
@@ -67,7 +69,7 @@
           <div class="user-name">{{ current_user.username }}</div>
           <div class="user-role">{{ current_user.role.title() }}</div>
         </div>
-        <a href="{{ url_for('logout') }}" style="margin-left:auto;color:var(--muted);font-size:18px;text-decoration:none" title="Logout">↩</a>
+        <a href="{{ url_for('logout') }}" class="logout-link" title="Logout">Log out</a>
       </div>
     </div>
   </aside>
@@ -79,6 +81,7 @@
         {% block top_actions %}{% endblock %}
       </div>
     </header>
+
     <main>
       {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
@@ -91,6 +94,7 @@
     </main>
   </div>
 </div>
+
 <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 {% block scripts %}{% endblock %}
 </body>

@@ -1,4 +1,4 @@
-// ── Utilities ─────────────────────────────────────────────────────────────────
+// Utilities
 
 function showAlert(message, type = 'success') {
   const alert = document.createElement('div');
@@ -29,7 +29,7 @@ async function apiPost(url, data) {
   return res.json();
 }
 
-// ── Modals ────────────────────────────────────────────────────────────────────
+// Modals
 
 function openModal(id) {
   document.getElementById(id)?.classList.add('active');
@@ -45,10 +45,13 @@ document.addEventListener('click', e => {
   }
 });
 
-// ── Chat ──────────────────────────────────────────────────────────────────────
+// Chat
 
 const chatInput = document.getElementById('chatInput');
 const chatMessages = document.getElementById('chatMessages');
+let voiceOutputEnabled = false;
+let recognition = null;
+let listening = false;
 
 if (chatInput) {
   chatInput.addEventListener('keydown', e => {
@@ -70,7 +73,7 @@ function appendMessage(role, content) {
   const isAI = role !== 'user';
   msg.innerHTML = `
     <div class="message-avatar ${isAI ? 'ai-avatar' : 'user-avatar-msg'}">
-      ${isAI ? '🎓' : '👤'}
+      ${isAI ? 'AI' : 'U'}
     </div>
     <div class="message-bubble">${formatMessage(content)}</div>
   `;
@@ -80,11 +83,121 @@ function appendMessage(role, content) {
 }
 
 function formatMessage(text) {
-  return text
+  if (String(text || '').includes('thinking-dots')) return text;
+  const safeText = String(text || "")
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+  return safeText
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
     .replace(/\*(.*?)\*/g, '<em>$1</em>')
     .replace(/`(.*?)`/g, '<code>$1</code>')
     .replace(/\n/g, '<br>');
+}
+
+function plainTextFromMessage(text) {
+  return String(text || '')
+    .replace(/\*\*(.*?)\*\*/g, '$1')
+    .replace(/\*(.*?)\*/g, '$1')
+    .replace(/`(.*?)`/g, '$1')
+    .replace(/[#>-]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function updateTutorStatus(sourceCounts, trainedAt) {
+  const status = document.getElementById('tutorStatusText');
+  if (!status) return;
+  const baseLessons = sourceCounts?.base_lessons || 0;
+  const notes = sourceCounts?.notes || 0;
+  const flashcards = sourceCounts?.flashcards || 0;
+  const chunks = sourceCounts?.chunks || 0;
+  const trained = trainedAt ? ` Last trained ${new Date(trainedAt).toLocaleString()}.` : '';
+  status.textContent = `Trained on ${baseLessons} built-in lesson${baseLessons === 1 ? '' : 's'}, ${notes} note${notes === 1 ? '' : 's'}, ${flashcards} flashcard${flashcards === 1 ? '' : 's'}, and ${chunks} study chunk${chunks === 1 ? '' : 's'}.${trained}`;
+}
+
+async function trainTutorModel() {
+  const btn = document.getElementById('trainTutorBtn');
+  if (btn) setLoading(btn, true);
+  try {
+    const data = await apiPost('/chat/train', {});
+    if (data.success) {
+      updateTutorStatus(data.source_counts, data.trained_at);
+      showAlert('Tutor trained on your notes and flashcards.');
+    } else {
+      showAlert('Tutor training failed. Please try again.', 'error');
+    }
+  } catch {
+    showAlert('Tutor training failed. Please try again.', 'error');
+  } finally {
+    if (btn) setLoading(btn, false);
+  }
+}
+
+function toggleVoiceOutput() {
+  voiceOutputEnabled = !voiceOutputEnabled;
+  const btn = document.getElementById('voiceToggleBtn');
+  if (btn) {
+    btn.classList.toggle('is-active', voiceOutputEnabled);
+    btn.setAttribute('aria-label', voiceOutputEnabled ? 'Turn spoken responses off' : 'Turn spoken responses on');
+    btn.setAttribute('title', voiceOutputEnabled ? 'Turn spoken responses off' : 'Turn spoken responses on');
+  }
+  if (!voiceOutputEnabled && window.speechSynthesis) window.speechSynthesis.cancel();
+}
+
+function speakTutorResponse(text) {
+  if (!voiceOutputEnabled || !window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(plainTextFromMessage(text));
+  utterance.rate = 0.96;
+  utterance.pitch = 1;
+  window.speechSynthesis.speak(utterance);
+}
+
+function setupSpeechRecognition() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) return null;
+  const instance = new SpeechRecognition();
+  instance.lang = 'en-US';
+  instance.interimResults = true;
+  instance.continuous = false;
+
+  instance.onstart = () => {
+    listening = true;
+    document.getElementById('micBtn')?.classList.add('btn-danger');
+    const status = document.getElementById('voiceStatus');
+    if (status) status.textContent = 'Listening... speak your question.';
+  };
+
+  instance.onresult = event => {
+    const transcript = Array.from(event.results)
+      .map(result => result[0].transcript)
+      .join('');
+    if (chatInput) chatInput.value = transcript;
+  };
+
+  instance.onerror = () => {
+    showAlert('Voice input is not available in this browser session.', 'error');
+  };
+
+  instance.onend = () => {
+    listening = false;
+    document.getElementById('micBtn')?.classList.remove('btn-danger');
+    const status = document.getElementById('voiceStatus');
+    if (status) status.textContent = 'Press Enter to send. Shift+Enter for a new line. Use Voice to dictate a question.';
+  };
+
+  return instance;
+}
+
+function toggleVoiceInput() {
+  if (!recognition) recognition = setupSpeechRecognition();
+  if (!recognition) {
+    showAlert('Voice input is not supported by this browser.', 'error');
+    return;
+  }
+  if (listening) recognition.stop();
+  else recognition.start();
 }
 
 async function sendMessage() {
@@ -92,6 +205,9 @@ async function sendMessage() {
   if (!msg) return;
   chatInput.value = '';
   chatInput.style.height = 'auto';
+  if (chatMessages?.children.length === 1 && chatMessages.children[0].style.textAlign === 'center') {
+    chatMessages.innerHTML = '';
+  }
   appendMessage('user', msg);
 
   // Thinking indicator
@@ -101,13 +217,14 @@ async function sendMessage() {
     const data = await apiPost('/chat/send', { message: msg });
     thinking.remove();
     appendMessage('assistant', data.response);
+    speakTutorResponse(data.response);
   } catch {
     thinking.remove();
     appendMessage('assistant', 'Sorry, something went wrong. Please try again.');
   }
 }
 
-// ── Notes ─────────────────────────────────────────────────────────────────────
+// Notes
 
 let activeNoteId = null;
 let saveTimeout = null;
@@ -167,7 +284,7 @@ async function summarizeNote() {
   document.getElementById('summaryPanel').style.display = 'block';
 }
 
-// ── Flashcards ────────────────────────────────────────────────────────────────
+// Flashcards
 
 let currentCards = [];
 let currentCardIndex = 0;
@@ -240,7 +357,7 @@ async function generateFlashcards() {
   }
 }
 
-// ── Quiz ──────────────────────────────────────────────────────────────────────
+// Quiz
 
 let quizQuestions = [];
 let quizAnswers = {};
@@ -268,7 +385,12 @@ function renderQuiz() {
   const container = document.getElementById('quizContainer');
   if (!container) return;
   container.style.display = 'block';
-  container.innerHTML = quizQuestions.map((q, i) => `
+  container.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <div style="font-family:var(--font-display);font-size:20px;font-weight:800;color:var(--ink)">Quiz</div>
+      <button class="btn btn-primary" id="submitQuizBtn" onclick="submitQuiz()">Submit quiz</button>
+    </div>
+    ${quizQuestions.map((q, i) => `
     <div class="question-card">
       <div class="question-num">Question ${i + 1}</div>
       <div class="question-text">${q.question}</div>
@@ -281,9 +403,7 @@ function renderQuiz() {
         `).join('')}
       </div>
     </div>
-  `).join('');
-
-  document.getElementById('submitQuizBtn').style.display = 'flex';
+  `).join('')}`;
 }
 
 function selectAnswer(qIndex, optIndex) {
@@ -312,7 +432,7 @@ async function submitQuiz() {
   document.getElementById('submitQuizBtn').style.display = 'none';
 }
 
-// ── Exam ──────────────────────────────────────────────────────────────────────
+// Exam
 
 let examQuestions = [];
 let examAnswers = {};
@@ -353,7 +473,7 @@ function renderExam() {
     if (q.type === 'true_false') {
       return `
         <div class="question-card">
-          <div class="question-num">Q${i+1} · ${q.marks} mark${q.marks > 1 ? 's' : ''}</div>
+          <div class="question-num">Q${i+1} / ${q.marks} mark${q.marks > 1 ? 's' : ''}</div>
           <div class="question-text">${q.question}</div>
           <div class="options">
             <button class="option-btn" onclick="selectExamAnswer(${i}, true)" data-q="${i}" data-opt="true">
@@ -367,7 +487,7 @@ function renderExam() {
     }
     return `
       <div class="question-card">
-        <div class="question-num">Q${i+1} · ${q.marks} mark${q.marks > 1 ? 's' : ''}</div>
+        <div class="question-num">Q${i+1} / ${q.marks} mark${q.marks > 1 ? 's' : ''}</div>
         <div class="question-text">${q.question}</div>
         <div class="options">
           ${q.options.map((opt, j) => `
@@ -417,16 +537,16 @@ async function submitExam() {
   const pct = Math.round(score / total * 100);
   document.getElementById('examContainer').innerHTML = `
     <div class="card" style="text-align:center;padding:48px">
-      <div style="font-size:60px;margin-bottom:16px">${pct >= 70 ? '🎉' : pct >= 50 ? '📚' : '💪'}</div>
+      <div class="empty-icon" style="margin:0 auto 16px">${pct >= 70 ? 'A' : pct >= 50 ? 'B' : 'R'}</div>
       <div class="font-display" style="font-size:32px;margin-bottom:8px">${score}/${total}</div>
       <div style="font-size:48px;font-weight:700;color:${pct>=70?'var(--accent3)':pct>=50?'var(--warn)':'var(--danger)'}">${pct}%</div>
-      <div class="text-muted" style="margin-top:16px">${pct>=70?'Excellent work!':pct>=50?'Good effort — keep studying!':'Keep going — you\'ll get there!'}</div>
+      <div class="text-muted" style="margin-top:16px">${pct>=70?'Excellent work!':pct>=50?'Good effort. Keep studying.':'Keep going. You will get there.'}</div>
       <a href="/exam" class="btn btn-primary" style="margin-top:24px">Back to Exams</a>
     </div>
   `;
 }
 
-// ── Coach ─────────────────────────────────────────────────────────────────────
+// Coach
 
 async function getCoachAdvice() {
   const btn = document.getElementById('adviceBtn');
@@ -437,7 +557,7 @@ async function getCoachAdvice() {
   if (el) el.innerHTML = formatMessage(data.advice);
 }
 
-// ── Study Planner ─────────────────────────────────────────────────────────────
+// Study Planner
 
 async function generatePlan() {
   const goal = document.getElementById('planGoal')?.value;
@@ -449,12 +569,12 @@ async function generatePlan() {
   setLoading(btn, true);
   const data = await apiPost('/planner/generate', { goal, deadline, subjects, hours_per_day: hours });
   setLoading(btn, false);
-  document.getElementById('planResult').style.display = 'block';
-  document.getElementById('planContent').textContent = data.plan;
+  if (document.getElementById('planResult')) document.getElementById('planResult').style.display = 'block';
+  if (document.getElementById('planContent')) document.getElementById('planContent').textContent = data.plan;
   location.reload();
 }
 
-// ── Upload ────────────────────────────────────────────────────────────────────
+// Upload
 
 const dropZone = document.getElementById('dropZone');
 
@@ -495,7 +615,7 @@ async function handleFileUpload(file) {
   }
 }
 
-// ── Analytics Charts ──────────────────────────────────────────────────────────
+// Analytics Charts
 
 function initCharts() {
   const scoreCtx = document.getElementById('scoreChart');
@@ -509,8 +629,8 @@ function initCharts() {
         datasets: [{
           label: 'Score %',
           data: window.quizData.map(r => Math.round(r.score / r.total * 100)),
-          borderColor: '#6c8eff',
-          backgroundColor: 'rgba(108,142,255,0.1)',
+          borderColor: '#2563eb',
+          backgroundColor: 'rgba(37,99,235,0.1)',
           tension: 0.4,
           fill: true
         }]
@@ -519,8 +639,8 @@ function initCharts() {
         responsive: true,
         plugins: { legend: { display: false } },
         scales: {
-          y: { min: 0, max: 100, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#64748b' } },
-          x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#64748b' } }
+          y: { min: 0, max: 100, grid: { color: 'rgba(16,24,40,0.08)' }, ticks: { color: '#667085' } },
+          x: { grid: { color: 'rgba(16,24,40,0.08)' }, ticks: { color: '#667085' } }
         }
       }
     });
@@ -533,13 +653,13 @@ function initCharts() {
         labels: window.topicData.map(t => t.topic),
         datasets: [{
           data: window.topicData.map(t => Math.round(t.score / t.total * 100)),
-          backgroundColor: ['#6c8eff','#a78bfa','#34d399','#fbbf24','#f87171'],
+          backgroundColor: ['#2563eb','#0f766e','#16a34a','#d97706','#dc2626'],
           borderWidth: 0
         }]
       },
       options: {
         responsive: true,
-        plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8', padding: 16 } } }
+        plugins: { legend: { position: 'bottom', labels: { color: '#667085', padding: 16 } } }
       }
     });
   }
